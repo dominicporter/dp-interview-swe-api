@@ -1,5 +1,7 @@
 interface Reading {
-  // TODO: change this to contain whatever information is needed
+  timestamp: number;
+  name: string;
+  value: number;
 }
 
 // This is a fake database which stores data in-memory while the process is running
