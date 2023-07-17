@@ -1,7 +1,7 @@
 import express, { Express } from "express";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import { addReading, getReading } from "./database";
+import { addReading, getAllReadings } from "./database";
 
 dotenv.config();
 
@@ -19,10 +19,10 @@ app.post("/data", async (req, res) => {
     const lines = req.body.split("\n");
     lines.forEach((line: string) => {
       const data = line.split(" ").filter((x) => x !== "");
-      console.log(data);
       const timestamp = parseInt(data[0]);
       const name = data[1];
       const value = parseFloat(data[2]);
+
       if (
         !(new Date(timestamp).getTime() > 0) ||
         isNaN(value) ||
@@ -30,19 +30,43 @@ app.post("/data", async (req, res) => {
       ) {
         throw new Error("Invalid data");
       }
-      addReading(timestamp.toString(), { timestamp, name, value });
+      addReading(timestamp.toString() + name, { timestamp, name, value });
     });
     return res.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.log(error);
     return res.json({ success: false });
   }
 });
 
 app.get("/data", async (req, res) => {
-  // TODO: check what dates have been requested, and retrieve all data within the given range
+  try {
+    const from = new Date(req.query.from as string);
+    const to = new Date(req.query.to as string);
 
-  // getReading(...)
+    // TODO check from is earlier than to
+    if (!(new Date(from).getTime() > 0) || !(new Date(to).getTime() > 0)) {
+      throw new Error("Invalid parameters");
+    }
 
+    // TODO: move the date filter into DB function
+    const readings = getAllReadings();
+
+    const filteredData = readings
+      .filter((r) => {
+        const readingDate = new Date(r.timestamp);
+        // Note: this is from midnight to midnight
+        // Should we add one day to 'to' value?
+        return readingDate >= from && readingDate < to;
+      })
+      .map((r) => ({
+        time: new Date(r.timestamp),
+        name: r.name,
+        value: r.value,
+      }));
+
+    return res.json({ success: true, data: filteredData, averagePower: 0 });
+  } catch {}
   return res.json({ success: false });
 });
 
