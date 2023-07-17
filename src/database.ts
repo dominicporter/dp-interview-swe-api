@@ -12,6 +12,7 @@ const database: Record<string, Reading> = {};
  * Store a reading in the database using the given key
  */
 export const addReading = (key: string, reading: Reading): Reading => {
+  console.log('adding '+new Date(reading.timestamp).toISOString());
   database[key] = reading;
   return reading;
 };
@@ -21,4 +22,11 @@ export const addReading = (key: string, reading: Reading): Reading => {
  */
 export const getReading = (key: string): Reading | undefined => {
   return database[key];
+};
+
+/**
+ * Retrieve all the readings in the DB
+ */
+export const getAllReadings = (): Reading[] => {
+  return Object.values(database);
 };
